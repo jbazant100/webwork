@@ -1,0 +1,114 @@
+## DESCRIPTION
+## MA321 Quantitative Reasoning
+## ENDDESCRIPTION
+
+## DBsubject('Statistics')
+## Date('Summer 2019')
+## Author('Jonathan Cornick') # Originally by David Lippman
+## Institution('QCC')
+## KEYWORDS('pie chart','percents')
+
+DOCUMENT();
+
+loadMacros(
+  "PGstandard.pl",
+  "PGchoicemacros.pl",
+  "MathObjects.pl",
+  "PGgraphmacros.pl",
+  "PGcourse.pl",
+  
+);
+TEXT(&beginproblem);
+# make sure we're in the context we want
+# Context("Numeric");
+
+$whole = 100;
+@cats = ("Groceries","Other","Hot Food","Restaurants");
+@s = (28, 22, 17); #starting values
+@percents = ($s[0]+random(-2,2,1),$s[1]+random(-2,2,1), $s[2]+random(-2,2,1),0);
+# $percents[3] = $whole - sumarray($percents);
+$sum = $percents[0] + $percents[1] + $percents[2];
+$percents[3] = $whole - $sum;
+#$proportion = $percents/$whole;
+@proportion = ($percents[0]/$whole, $percents[1]/$whole, $percents[2]/$whole);
+
+#$plot = showasciisvg("initPicture(-5.5,5.5,-5.5,5.5);circle([0,0],5);line([0,0],[5,0]);line([0,0],[-.868,4.924]);text([1,2],'$cats[0]','right');text([1,1],'$percents[0]%','right');line([0,0],[-5,0]);text([-1,2],'$cats[1]','left');text([-1,1],'$percents[1]%','left');line([0,0],[2.5,-4.33]);text([1,-1],'$cats[2]','right');text([1,-2],'$percents[2]%','right');text([-1,-1],'$cats[3]','center');text([-1,-2],'$percents[3]%','left');");
+
+$tot = random(200,3000,10);
+$rnd = random(0,2,1);
+$p = $percents[$rnd];
+
+#$name = randfemalename();
+$name = list_random("Chelsea", "Alice", "Sierra", "Emma", "Tom", "Lee", "Ronaldo");
+$she = "she";
+if(($name eq "Tom") || ($name eq "Lee") || ($name eq "Ronaldo"))
+{ $she = "he";  }
+
+@choices = (round($tot*$p/100), round($p), round($tot* ($p+list_random(-1,1))/100));
+#$choices[0] = round($tot*$p/100);
+#$choices[1] = round($p);
+#$choices[2] = round($tot*($p+nonzerorand(-1,1))/100);
+#$choices = stringprepend($questions,"\$");
+$answer = 0;
+
+$mc = new_multiple_choice();
+$mc -> qa("",'$'.$choices[$answer]);
+$mc -> extra('$'.$choices[1], '$'.$choices[2]);
+
+$pi=3.1415926535897932384626;
+($WIDTH,$HEIGHT,$TEXSIZE)=(420,420,150);
+# now initialize the graph
+$graph = init_graph(-.1,-.1, 4.1,4.1,size=>[$WIDTH,$HEIGHT]);
+$blue = $graph->im->colorAllocate(100,100,255);
+$black = $graph->im->colorAllocate(0,0,0);
+$graph->im->arc(210,210,400,400,0,360,$black);
+$a=2;$b=2; #center of circle
+
+@labels = ("$cats[0] $percents[0]".'%', "$cats[1] $percents[1]".'%', "$cats[2] $percents[2]".'%', "$cats[3] $percents[3]".'%');
+$sum = $proportion[0] + $proportion[1] + $proportion[2];
+@splits = (0, $proportion[0], $proportion[1], $proportion[2], 1-$sum); #must have 2 more elements than @proportion
+
+#pie chart
+$amount = 0; #0 starts at x-axis(right) & positive goes counterclockwise
+for(my $i=0;$i<=3;$i++) 
+{   $amount = $amount + $splits[$i];
+    my $next = $amount + $splits[$i+1];
+    $y=$b+2*sin($amount*2*$pi); 
+    $x=$a+2*cos($amount*2*$pi); 
+    $graph->moveTo($a,$b);
+    $graph->lineTo($x ,$y ,'black',2);
+      
+    my $middle = ($amount + $next)/2;
+    $y=$b+2*sin($middle*2*$pi);
+    $x=$a+2*cos($middle*2*$pi);
+    my $m = ($a + $x)/2;
+    my $n = ($b + $y)/2;
+    my $label =  new Label($m ,$n, $labels[$i],'black',('center','center'));
+    $label -> font(GD::Font->Giant);
+    $graph -> lb($label);
+}
+   
+#NOTE  Actual size of box is in the image below
+#TEXT(beginproblem());
+#FIRST PAREN IS QUESTION, SECOND PAREN IS CORRECT ANSWER
+BEGIN_TEXT
+
+$name categorized her food spending for this month into four categories: $cats[0], $cats[1], $cats[2], and $cats[3].  The percents $she spent in each category are pictured here.
+$BR
+\{ image( insertGraph($graph), tex_size=>$TEXSIZE, height=>$HEIGHT, width=>$WIDTH ) \}
+$BR
+If $name spent a total of $$tot this month, how much did $she spend on $cats[$rnd]?
+$PAR
+\{ $mc -> print_q \}
+\{ $mc -> print_a \}
+END_TEXT
+BEGIN_HINT
+Get help: <a href="http://youtu.be/xEEk1s7-leA">Video</a>
+END_HINT
+BEGIN_SOLUTION
+For $cats[$rnd]&comma; $name spent $percents[$rnd]&percnt; of $tot.
+$BR $proportion[$rnd] &times; $tot &equals; $choices[$answer]
+END_SOLUTION
+Context()->normalStrings;
+ANS( radio_cmp( $mc -> correct_ans ));
+ENDDOCUMENT();
