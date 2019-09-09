@@ -1,0 +1,94 @@
+## DESCRIPTION
+## MA321 Quantitative Reasoning
+## ENDDESCRIPTION
+
+## DBsubject('Statistics')
+## Date('Summer 2019')
+## Author('Jonathan Cornick') # Originally by David Lippman
+## Institution('QCC')
+## KEYWORDS('pie chart','percents')
+
+DOCUMENT();
+
+loadMacros(
+  "PGstandard.pl",
+  "PGchoicemacros.pl",
+  "MathObjects.pl",
+  "PGgraphmacros.pl",
+  "PGcourse.pl"
+);
+TEXT(&beginproblem);
+# make sure we're in the context we want
+# Context("Numeric");
+
+$whole = random(1000,2000,100);
+$rent = round(5/18*$whole);
+$food = round(2/9*$whole);
+$fun = round(1/6*$whole);
+$other = $whole - $rent - $food - $fun;
+
+@cats = ("rent","food","fun");
+@spent = ($rent,$food,$fun);
+$rnd = random(0,2,1);
+$answer = 100*$rent/$whole if ($rnd == 0);
+$answer = 100*$food/$whole if ($rnd == 1);
+$answer = 100*$fun/$whole if ($rnd == 2);
+#$answer = 100*$spent[$rnd]/$whole;
+$answer = round($answer);
+
+$abstolerance = .001;
+
+
+$pi=3.1415926535897932384626;
+($WIDTH,$HEIGHT,$TEXSIZE)=(420,420,150);
+# now initialize the graph
+$graph = init_graph(-.1,-.1, 4.1,4.1,size=>[$WIDTH,$HEIGHT]);
+$blue = $graph->im->colorAllocate(100,100,255);
+$black = $graph->im->colorAllocate(0,0,0);
+$graph->im->arc(210,210,400,400,0,360,$black);
+$a=2;$b=2; #center of circle
+
+@labels = ("Rent $rent", "Food $food", "Fun $fun", "Other $other");
+@proportion = (5/18, 2/9, 1/6);
+$sum = $proportion[0] + $proportion[1] + $proportion[2];
+@splits = (0, $proportion[0], $proportion[1], $proportion[2], 1-$sum); #must have 2 more elements than @proportion
+
+#pie chart
+$amount = 0; #0 starts at x-axis(right) & positive goes counterclockwise
+for(my $i=0;$i<=3;$i++) 
+{   $amount = $amount + $splits[$i];
+    my $next = $amount + $splits[$i+1];
+    $y=$b+2*sin($amount*2*$pi); 
+    $x=$a+2*cos($amount*2*$pi); 
+    $graph->moveTo($a,$b);
+    $graph->lineTo($x ,$y ,'black',2);
+      
+    my $middle = ($amount + $next)/2;
+    $y=$b+2*sin($middle*2*$pi);
+    $x=$a+2*cos($middle*2*$pi);
+    my $m = ($a + $x)/2;
+    my $n = ($b + $y)/2;
+    my $label =  new Label($m ,$n, $labels[$i],'black',('center','center'));
+    $label -> font(GD::Font->Giant);
+    $graph -> lb($label);
+}
+   
+#NOTE  Actual size of box is in the image below
+#TEXT(beginproblem());
+#FIRST PAREN IS QUESTION, SECOND PAREN IS CORRECT ANSWER
+BEGIN_TEXT
+Kara categorized her spending for this month into four categories: Rent, Food, Fun, and Other.  The amounts she spent in each category are pictured here.
+$BR
+\{ image( insertGraph($graph), tex_size=>$TEXSIZE, height=>$HEIGHT, width=>$WIDTH ) \}
+$BR
+What percent of her total spending did she spend on $cats[$rnd]? $BR (Hint: First calculate the total amount she spent) $BR Answer to the nearest whole percent.
+$PAR
+\{ans_rule( 10 )\}%
+END_TEXT
+BEGIN_SOLUTION
+For $cats[$rnd], Kara spent $$spent[$rnd] out of $$whole $BR
+\[ \frac{$spent[$rnd]}{$whole} = $proportion[$rnd] = $answer%\] afer rounding
+END_SOLUTION
+Context()->normalStrings;
+ANS( num_cmp( $answer, tol=>0.6) ); #numerical tolerance +or-0.6
+ENDDOCUMENT();
