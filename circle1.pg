@@ -32,15 +32,24 @@ $r = random(1,5,1);
 $height = 400;
 $width = 400;
 
-# define a circle using 2 functions 
-$func1 = Formula(" sqrt($r^2 - (x-$h)^2) + $k");
-$func2 = Formula("-sqrt($r^2 - (x-$h)^2) + $k");
+# define a circle using parametric functions 
+## x = r*cos(t) + h
+$xfunc = sub { 
+  my $t = shift();
+  return $r*cos($t) + $h; };
+## y = r*sin(t) + k
+$yfunc = sub { 
+  my $t = shift();
+  return $r*sin($t) + $k; };
 
 # the minimum and maximum x and y values the functions reach
 $xmin = $h - $r;
 $xmax = $h + $r;
 $ymin = $k - $r;
 $ymax = $k + $r;
+# the minimum and maximum t values the functions reach
+$tmin = 0;
+$tmax = 6.3;
 
 # and the number of gridlines we graph
 $left = -10;
@@ -77,12 +86,11 @@ foreach my $i (1..9) {
   }
 
 # and add the function to be graphed
-plot_functions( $graph, "$func1 for x in " .
-"<$xmin,$xmax> using color:red " .
-"and weight:2");
-plot_functions( $graph, "$func2 for x in " .
-"<$xmin,$xmax> using color:red " .
-"and weight:2");
+$fn = new Fun( $xfunc, $yfunc, $graph );
+$fn -> domain($tmin,$tmax);
+#$fn -> steps(90);
+#$fn -> weight(2);
+$fn -> color('blue');
 
 $center_dot = closed_circle( $h, $k, 'black' ); 
 $graph -> stamps($center_dot); #mark center of circle on graph
