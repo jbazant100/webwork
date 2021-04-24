@@ -1,0 +1,207 @@
+DOCUMENT();        
+
+loadMacros(
+  "PGstandard.pl",
+  "MathObjects.pl",
+  "PGcourse.pl",
+  #"weightedGrader.pl",
+  "parserPopUp.pl",
+  "unionTables.pl",
+  "PGgraphmacros.pl",
+  #"PGchoicemacros.pl",
+  "PGunion.pl",
+  "imageChoice.pl",
+  "PGchoicemacros.pl",
+  "parserRadioButtons.pl",
+  #"contextLimitedPolynomial.pl",
+);
+
+
+TEXT(beginproblem());
+
+$refreshCachedImages = 1;
+$showPartialCorrectAnswers = 1;
+##############################################
+#  Setup
+
+Context()->variables->are(x=>"Real",y=>"Real");
+
+#@letter = ("A", "B", "C", "D");
+#$popup = PopUp(["?","A","B","C","D"], $letter[0]);
+
+
+$x_c = non_zero_random(-6,6,1);
+$y_c = non_zero_random(-6,6,1);
+$r = list_random(1,2,3);
+$rr = $r*$r;
+
+$D = -2*$x_c;
+$E = -2*$y_c;
+$F = $x_c*$x_c + $y_c*$y_c - $r*$r;
+
+$Dx = $D."x";
+$Ey = $E."y";
+
+if( $D == 0){ $D_term = ""; }
+elsif( $D == 1){ $D_term = "x"; }
+elsif( $D == -1){ $D_term = "-x"; }
+else{ $D_term = "+ $D x"; }
+
+if( $E == 0){ $E_term = ""; }
+elsif( $E == 1){ $E_term = "y"; }
+elsif( $E == -1){ $E_term = "-y"; }
+else{ $E_term = "+ $E y"; }
+
+if($F == 0){ $F_term = ""; }
+else{ $F_term = "+ $F"; }
+
+#Context("LimitedPolynomial")->variables->are(x=>"Real",y=>"Real");
+
+$general = Formula("x^2 + y^2 + $D x + $E y + $F")->reduce;
+#$equation = "\( $general = 0 \)";
+
+#$equation = "\(  x^2 + y^2 + $D x + $E y + $F = 0 \)";
+$equation = "\(  x^2 + y^2 $D_term $E_term $F_term = 0 \)";
+
+
+#Context("Numeric")->variables->are(x=>"Real",y=>"Real");
+
+$showCenter = 1; #show center of circle (if this variable = 1)
+
+$height = 250;
+$width = 250;
+
+# and the number of gridlines we graph
+$left = -10;
+$right = 10;
+$bottom = -10;
+$top = 10;
+$label_xy = 0.3;
+$label_n = 0.25;
+$label_ng = $label_n + 0.1;
+
+if($left*$right < 0){ $x_grid = abs($right-$left); }
+else{ $x_grid = abs($top-$bottom-1); } #number of gridlines we graph
+if($top*$bottom < 0){ $y_grid = abs($bottom-$top); }
+else{ $y_grid = abs($top-$bottom-1); } #number of gridlines we graph
+
+sub circleGraph {
+   (my $h, my $k, my $r) = @_;
+
+
+   # now initialize the graph
+   my $graph = init_graph($left, $bottom, $right, $top,
+   axes=>[0,0], #grid=>[$xgrid,$ygrid],
+   size=>[$height,$width]);
+   $graph->new_color("greenish", 0, 168, 0);
+   $graph->lb('reset');
+   $graph->lb( new Label($right-$label_xy,$label_xy,'x','black','center','middle'));
+   $graph->lb( new Label(-$label_xy,$top-$label_xy, 'y','black','center','middle'));
+   
+   $graph->h_grid("gray",-9,-8,-7,-6,-5,-4,-3,-2,-1,1,2,3,4,5,6,7,8,9);
+   $graph->v_grid("gray",-9,-8,-7,-6,-5,-4,-3,-2,-1,1,2,3,4,5,6,7,8,9);
+   
+   $graph->lb( new Label(-$label_n,$label_n,0,'black','center','middle'));
+   foreach my $i (1..9) {
+     $graph->lb( new Label($i,$label_n,$i,'black','center','middle'));
+     $graph->lb( new Label(-$label_n,$i, $i,'black','center','middle'));
+     $graph->lb( new Label(-$i,$label_n,-$i,'black','center','middle'));
+     $graph->lb( new Label(-$label_ng,-$i,-$i,'black','center','middle'));
+     }
+
+   # define a circle using 2 functions 
+   $func1 = Formula(" sqrt($r^2 - (x-$h)^2) + $k");
+   $func2 = Formula("-sqrt($r^2 - (x-$h)^2) + $k");
+
+   # the minimum and maximum x and y values the functions reach
+   $xmin = $h - $r;
+   $xmax = $h + $r;
+   $ymin = $k - $r;
+   $ymax = $k + $r;
+
+   # and add the function to be graphed
+   plot_functions( $graph, "$func1 for x in " .
+   "<$xmin,$xmax> using color:red " .
+   "and weight:2");
+   plot_functions( $graph, "$func2 for x in " .
+   "<$xmin,$xmax> using color:red " .
+   "and weight:2");
+
+   my $center_dot = closed_circle( $h, $k, 'black' );
+   if($showCenter == 1){
+      $graph -> stamps($center_dot); #mark center of circle on graph
+   }
+   
+   return $graph;
+}
+
+if($rr == 1){ $rr = 2; }
+
+$graph1 = circleGraph($x_c, $y_c, $r);
+$graph2 = circleGraph(-$x_c, -$y_c, $r);
+$graph3 = circleGraph($x_c, $y_c, $rr);
+$graph4 = circleGraph(-$x_c, -$y_c, $rr);
+
+$rr = $r*$r;
+
+$tex_size = 500; #500 means 50%
+
+$image1 = image( insertGraph($graph1), tex_size=>$tex_size,
+            height=>$height, width=>$width,
+            extra_html_tags=>'alt="graph of a circle"');
+$image2 = image( insertGraph($graph2), tex_size=>$tex_size,
+            height=>$height, width=>$width,
+            extra_html_tags=>'alt="graph of a circle"');
+$image3 = image( insertGraph($graph3), tex_size=>$tex_size,
+            height=>$height, width=>$width,
+            extra_html_tags=>'alt="graph of a circle"');
+$image4 = image( insertGraph($graph4), tex_size=>$tex_size,
+            height=>$height, width=>$width,
+            extra_html_tags=>'alt="graph of a circle"');
+
+
+$mc = new_multiple_choice();
+$mc->qa("", $image1.$PAR);
+$mc->extra( $image2.$PAR, $image3.$PAR, $image4.$PAR);
+#$mc->makeLast("none of the above");
+
+
+@fig = ($image1, $image2, $image3, $image4);
+
+$z = random(0,3,1);
+
+@perm = shuffle(4);
+@fig = @fig[@perm];
+@inv = invert(@perm);
+
+@letter = ("A", "B", "C", "D");
+
+$popup = PopUp(["?","A","B","C","D"], $letter[$inv[$0]]);
+
+
+
+BEGIN_TEXT
+Find the graph of circle $equation.
+$PAR
+The correct graph is \{ $popup->menu() \} $BR
+
+\{
+BeginTable().
+ AlignedRow(["<b>A</b>","<b>B</b>"]).
+  TableSpace(5,0).
+  AlignedRow([$fig[0],$fig[1]]).
+  TableSpace(25,6).
+  AlignedRow(["<b>C</b>","<b>D</b>"]).
+  TableSpace(5,0).
+  AlignedRow([$fig[2],$fig[3]]).
+EndTable();
+\}
+END_TEXT
+
+install_problem_grader(~~&std_problem_grader);
+$showPartialCorrectAnswers = 0;
+
+ANS( $popup->cmp() );
+#ANS( radio_cmp( $mc->correct_ans() ) );
+
+ENDDOCUMENT();
