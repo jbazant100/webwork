@@ -1,0 +1,110 @@
+DOCUMENT();        
+
+loadMacros(
+"PGstandard.pl",
+"MathObjects.pl",
+"PGcourse.pl",
+#"weightedGrader.pl",
+#"parserPopUp.pl",
+#"unionTables.pl",
+"PGgraphmacros.pl",
+#"PGchoicemacros.pl",
+);
+
+
+TEXT(beginproblem());
+
+$refreshCachedImages = 1;
+$showPartialCorrectAnswers = 1;
+##############################################
+#  Setup
+
+Context()->variables->are(x=>"Real",y=>"Real");
+
+#@letter = ("A", "B", "C", "D");
+#$popup = PopUp(["?","A","B","C","D"], $letter[0]);
+
+
+$h = non_zero_random(-6,6,1);
+$k = non_zero_random(-6,6,1);
+$r = random(1,5,1);
+
+$height = 400;
+$width = 400;
+
+# define a circle using 2 functions 
+$func1 = Formula(" sqrt($r^2 - (x-$h)^2) + $k");
+$func2 = Formula("-sqrt($r^2 - (x-$h)^2) + $k");
+
+# the minimum and maximum x and y values the functions reach
+$xmin = $h - $r;
+$xmax = $h + $r;
+$ymin = $k - $r;
+$ymax = $k + $r;
+
+# and the number of gridlines we graph
+$left = -10;
+$right = 10;
+$bottom = -10;
+$top = 10;
+$label_xy = 0.3;
+$label_n = 0.25;
+$label_ng = $label_n + 0.1;
+
+if($left*$right < 0){ $x_grid = abs($right-$left); }
+else{ $x_grid = abs($top-$bottom-1); } #number of gridlines we graph
+if($top*$bottom < 0){ $y_grid = abs($bottom-$top); }
+else{ $y_grid = abs($top-$bottom-1); } #number of gridlines we graph
+
+# now initialize the graph
+$graph = init_graph($left, $bottom, $right, $top,
+axes=>[0,0], #grid=>[$xgrid,$ygrid],
+size=>[$height,$width]);
+$graph->new_color("greenish", 0, 168, 0);
+$graph->lb('reset');
+$graph->lb( new Label($right-$label_xy,$label_xy, 'x','black','center','middle'));
+$graph->lb( new Label(-$label_xy,$top-$label_xy, 'y','black','center','middle'));
+
+$graph->h_grid("gray",-9,-8,-7,-6,-5,-4,-3,-2,-1,1,2,3,4,5,6,7,8,9);
+$graph->v_grid("gray",-9,-8,-7,-6,-5,-4,-3,-2,-1,1,2,3,4,5,6,7,8,9);
+
+$graph->lb( new Label(-$label_n,$label_n,0,'black','center','middle'));
+foreach my $i (1..9) {
+    $graph->lb( new Label($i,$label_n,$i,'black','center','middle'));
+    $graph->lb( new Label(-$label_n,$i, $i,'black','center','middle'));
+    $graph->lb( new Label(-$i,$label_n,-$i,'black','center','middle'));
+    $graph->lb( new Label(-$label_ng,-$i,-$i,'black','center','middle'));
+  }
+
+# and add the function to be graphed
+plot_functions( $graph, "$func1 for x in " .
+"<$xmin,$xmax> using color:red " .
+"and weight:2");
+plot_functions( $graph, "$func2 for x in " .
+"<$xmin,$xmax> using color:red " .
+"and weight:2");
+
+$center_dot = closed_circle( $h, $k, 'black' ); 
+$graph -> stamps($center_dot); #mark center of circle on graph
+
+BEGIN_TEXT
+Write equation of the circle in standard form.
+$PAR
+\{ image( insertGraph($graph), tex_size=>800,
+    height=>$height, width=>$width,
+    extra_html_tags=>'alt="graph of a circle"') \}
+$PAR
+ \{ ans_rule(30) \} = \{ ans_rule(10) \}
+END_TEXT
+
+install_problem_grader(~~&std_problem_grader);
+$showPartialCorrectAnswers = 1;
+
+#ANS( $popup->cmp() );
+Context()->variables->are(x=>"Real", y=>"Real");
+$left_side = Formula("(x-$h)^2 + (y-$k)^2")->reduce;
+$right_side = Compute("$r^2");
+ANS($left_side->cmp());
+ANS($right_side->cmp());
+
+ENDDOCUMENT();
