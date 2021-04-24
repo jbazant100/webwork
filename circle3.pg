@@ -117,6 +117,7 @@ sub circleGraph {
    ## y = r*sin(t) + k
    $yfunc = sub { 
      my $t = shift();
+     return $r*sin($t) + $k; };
 
    # the minimum and maximum x and y values the functions reach
    $xmin = $h - $r;
